@@ -3,11 +3,15 @@ package pt.fabm.tests;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class Java8 {
+    private Predicate<String> notEmpty;
+
     public <V> void validatedSet(V value, Consumer<V> setter, Predicate<V> predicate) throws InvalidParameter {
         validatedSet(value, setter, predicate, null);
     }
@@ -23,10 +27,35 @@ public class Java8 {
     }
 
     @Test
+    public void testPojo() {
+        Pojo pojo = new GenericBuilder<>(Pojo::new)
+                .with(Pojo::setNum, Objects::nonNull, 1)
+                .with(Pojo::setText, notEmpty, "example")
+                .build();
+
+        Assert.assertEquals(1, pojo.getNum());
+        Assert.assertEquals("example", pojo.getText());
+
+        pojo = null;
+        try {
+            pojo = new GenericBuilder<>(Pojo::new)
+                    .with(Pojo::setNum, Objects::nonNull, 1)
+                    .with(Pojo::setText, notEmpty, "text", "")
+                    .build();
+            Assert.fail();
+        } catch (InvalidParameter invalidParameter) {
+            Assert.assertEquals("text", invalidParameter.getName());
+        }
+
+        Assert.assertNull(pojo);
+
+    }
+
+    @Test
     public void testsPredicates() {
         Pojo pojo = new Pojo();
 
-        Predicate<String> notEmpty = e -> e != null && !e.isEmpty();
+        notEmpty = e -> e != null && !e.isEmpty();
 
         validatedSet(2, pojo::setNum, e -> e != null && e >= 2);
         validatedSet("Hello world", pojo::setText, notEmpty.and(e -> e.length() > 2));
@@ -39,26 +68,29 @@ public class Java8 {
             Assert.assertEquals(e.getName(), "num");
         }
 
-        pojo = new PojoBuilder<>(Pojo::new)
-                .with(Pojo::setNum, Objects::nonNull, 1)
-                .with(Pojo::setText, notEmpty, "example")
-                .build();
+    }
 
-        Assert.assertEquals(1, pojo.getNum());
-        Assert.assertEquals("example", pojo.getText());
+    @Test
+    public void testsSetterChecker() {
+        Pojo pojo = new Pojo();
 
-        pojo = null;
+
+        List<SetterChecker<?>> setterCheckers = new ArrayList<>();
+
+        setterCheckers.add(new SetterChecker<Integer>()
+                .withParameterName("num")
+                .withSupplier(() -> 2)
+                .withPredicate(e -> e > 3)
+                .withSetter(pojo::setNum)
+        );
+
         try {
-            pojo = new PojoBuilder<>(Pojo::new)
-                    .with(Pojo::setNum, Objects::nonNull, 1)
-                    .with(Pojo::setText, notEmpty, "text", "")
-                    .build();
+            setterCheckers.forEach(SetterChecker::checkedSet);
             Assert.fail();
-        } catch (InvalidParameter invalidParameter) {
-            Assert.assertEquals("text", invalidParameter.getName());
+        } catch (InvalidParameter e) {
+            Assert.assertEquals("num",e.getName());
         }
 
-        Assert.assertNull(pojo);
-
     }
+
 }

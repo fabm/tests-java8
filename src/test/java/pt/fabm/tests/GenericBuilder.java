@@ -7,26 +7,26 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class PojoBuilder<T> {
+public class GenericBuilder<T> {
     private Supplier<T> supplier;
     private List<Consumer<T>> listSetters = new ArrayList<>();
 
-    public PojoBuilder(Supplier<T> supplier) {
+    public GenericBuilder(Supplier<T> supplier) {
         this.supplier = supplier;
     }
 
-    public <V> PojoBuilder<T> with(final BiConsumer<T, V> setter, V value) throws InvalidParameter {
+    public <V> GenericBuilder<T> with(final BiConsumer<T, V> setter, V value) throws InvalidParameter {
         Consumer<T> c = instance -> setter.accept(instance, value);
         listSetters.add(c);
         return this;
     }
 
-    public <V> PojoBuilder<T> with(final BiConsumer<T, V> setter, Predicate<V> predicate, V value)
+    public <V> GenericBuilder<T> with(final BiConsumer<T, V> setter, Predicate<V> predicate, V value)
             throws InvalidParameter {
         return with(setter, predicate, null, value);
     }
 
-    public <V> PojoBuilder<T> with(final BiConsumer<T, V> setter, Predicate<V> predicate, String name, V value)
+    public <V> GenericBuilder<T> with(final BiConsumer<T, V> setter, Predicate<V> predicate, String name, V value)
             throws InvalidParameter {
         if (!predicate.test(value)) {
             throw new InvalidParameter(name);
