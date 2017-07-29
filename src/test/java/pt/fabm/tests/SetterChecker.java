@@ -5,7 +5,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class SetterChecker<V> {
-    private Supplier<V> supplier;
+    private V value;
     private Predicate<V> predicate;
     private Consumer<V> setter;
     private String parameterName;
@@ -14,12 +14,16 @@ public class SetterChecker<V> {
     }
 
 
-    public Supplier<V> getSupplier() {
-        return supplier;
+    public String getParameterName() {
+        return parameterName;
     }
 
-    public SetterChecker<V> withSupplier(Supplier<V> supplier) {
-        this.supplier = supplier;
+    public V getValue() {
+        return value;
+    }
+
+    public SetterChecker<V> withValue(V value) {
+        this.value = value;
         return this;
     }
 
@@ -46,13 +50,13 @@ public class SetterChecker<V> {
         return this;
     }
 
-    public void checkedSet() throws InvalidParameter{
-        V value = supplier.get();
-        if (!predicate.test(value)){
-            throw new InvalidParameter(parameterName);
-        }else{
-            getSetter().accept(value);
+    public boolean checkedSet() throws InvalidParameter {
+        if (!predicate.test(value)) {
+            return false;
         }
+        getSetter().accept(value);
+        return true;
     }
+
 
 }

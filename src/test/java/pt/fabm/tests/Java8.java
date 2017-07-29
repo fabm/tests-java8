@@ -6,8 +6,10 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class Java8 {
     private Predicate<String> notEmpty;
@@ -79,17 +81,24 @@ public class Java8 {
 
         setterCheckers.add(new SetterChecker<Integer>()
                 .withParameterName("num")
-                .withSupplier(() -> 2)
+                .withValue(2)
                 .withPredicate(e -> e > 3)
                 .withSetter(pojo::setNum)
         );
 
-        try {
-            setterCheckers.forEach(SetterChecker::checkedSet);
-            Assert.fail();
-        } catch (InvalidParameter e) {
-            Assert.assertEquals("num",e.getName());
-        }
+        setterCheckers.add(new SetterChecker<String>()
+                .withParameterName("text")
+                .withPredicate(notEmpty)
+                .withValue("hello world")
+                .withSetter(pojo::setText)
+        );
+
+        Optional<SetterChecker<?>> failChecker = setterCheckers.stream().filter(e -> !e.checkedSet()).findAny();
+
+
+        Assert.assertTrue(failChecker.isPresent());
+        Assert.assertEquals("num",failChecker.get().getParameterName());
+
 
     }
 
