@@ -1,5 +1,6 @@
 package pt.fabm.tests;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -8,6 +9,8 @@ public class SetterChecker<V> {
     private V value;
     private Predicate<V> predicate;
     private Consumer<V> setter;
+    private Consumer<? super Object> beforeSet;
+    private Consumer<? super Object> afterSet;
     private String parameterName;
 
     public SetterChecker() {
@@ -50,11 +53,27 @@ public class SetterChecker<V> {
         return this;
     }
 
+    public SetterChecker<V> withBeforeSet(Consumer<? super Object> beforeSet) {
+        this.beforeSet = beforeSet;
+        return this;
+    }
+
+    public SetterChecker<V> withAfterSet(Consumer<? super Object> afterSet) {
+        this.afterSet = afterSet;
+        return this;
+    }
+
     public boolean checkedSet() throws InvalidParameter {
+        if (Objects.nonNull(beforeSet)) {
+            beforeSet.accept(value);
+        }
         if (!predicate.test(value)) {
             return false;
         }
         getSetter().accept(value);
+        if (Objects.nonNull(afterSet)) {
+            afterSet.accept(value);
+        }
         return true;
     }
 
